@@ -25,7 +25,8 @@
     "react-native-screens": "^2.7.0",
     "react-redux": "^7.2.0",
     "redux": "^4.0.5",
-    "redux-thunk": "^2.3.0"
+    "redux-thunk": "^2.3.0",
+    "rn-range-slider": "^1.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.6.2",

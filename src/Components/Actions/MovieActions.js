@@ -4,7 +4,7 @@ import axios from 'axios'
 export const fetchMovies = () => {
 	return (dispatch) => {
 		console.log('getting movies')
-		axios.get(API+'s=bad&y=2020')
+		axios.get(API+'s=bad')
 		.then(res => {
 			console.log('response', res.data)
 			dispatch({ type: ACTIONTYPES.FETCHMOVIES, payload: res.data.Search })

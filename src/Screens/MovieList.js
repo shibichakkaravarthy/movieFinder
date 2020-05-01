@@ -1,5 +1,6 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useRef} from 'react'
 import { SafeAreaView, ScrollView, View, TouchableOpacity, LayoutAnimation, Platform, UIManager, Dimensions, Image } from 'react-native'
+import RangeSlider from 'rn-range-slider';
 import { Icon, Input, Text, Button, Item, Picker } from 'native-base'
 import { shallowEqual, useSelector, useDispatch } from 'react-redux'
 import { fetchMovies, getMovieDetail, onSearch, setSuggestionsToMovies, resetSuggestions, updateMovieData } from '../Components/Actions'
@@ -37,11 +38,18 @@ if (
   }
 
 export const MovieList = ({ navigation }) => {
+	
+	const [filter, toggleFilter] = useState(true)
+	const [range, setRange] = useState({ low: 0, high: 0 })
+	const [yearRange, setYears] = useState({ low: 0, high: 0 })
+
+	const slider = useRef(null)
+
+	const dispatch = useDispatch()
 	const { movies, searchTerm, searchYear, searchSuggestions } = useSelector(state => {
 		// console.log('state', state)
 		return state.movies
 	}, shallowEqual)
-	const dispatch = useDispatch()
 
 	useEffect(() => {
 		dispatch(fetchMovies())
@@ -52,7 +60,33 @@ export const MovieList = ({ navigation }) => {
 	})
 
 	const currentYear = parseInt(new Date().getFullYear()) - 1870 //Oldest Movie in IMDb is dated back to 1874
-	console.log('Year', searchYear)
+
+	let filteredMovies = movies
+
+	if(movies.length) {
+		let moviesTimeRange = movies.map(movie => {
+			return parseInt(movie.Year)
+		})
+
+		moviesTimeRange.sort()
+		
+		if(yearRange.low !== moviesTimeRange[0] && yearRange.high !== moviesTimeRange[moviesTimeRange.length-1]) {
+			setYears({ low: moviesTimeRange[0], high: moviesTimeRange[moviesTimeRange.length-1] })
+			console.log(slider)
+			// slider.current.setLowValue(moviesTimeRange[0])
+			slider.current.setHighValue(moviesTimeRange[moviesTimeRange.length-1])
+		}
+
+		console.log('yearRange', yearRange)
+	}
+
+	if(range.low) {
+		filteredMovies = movies.filter(movie => {
+			if(movie.Year >= range.low && movie.Year <= range.high) {
+				return movie
+			}
+		})
+	}
 
 	return (
 		<SafeAreaView style={[ Styles.flex1 ]} >
@@ -109,12 +143,36 @@ export const MovieList = ({ navigation }) => {
 					}
 				</View>
 
+				{
+					(filter)
+					?
+					<View style={[ Styles.alignCenter, Styles.justifyCenter ]} >
+						<Text style={[ Styles.fontColorWhite, Styles.fontSize18, Styles.textAlignCenter, { marginBottom: -40 } ]} >Select Time Period (in Years)</Text>
+						<RangeSlider ref={slider} style={{width: width*0.8, height: 80}} gravity={'center'} min={yearRange.low} max={yearRange.high} step={2} selectionColor="#285FE0" blankColor="#333" labelBackgroundColor="#285FE0" labelBorderColor="#285FE0" onValueChanged={(low, high, fromUser) => { setRange({ low, high }) }} />
+					</View>
+					:
+					null
+				}
+
+				<View style={[ Styles.margin10, Styles.padding10 ]} >
+					<TouchableOpacity onPress={() => toggleFilter(!filter)} style={[ Styles.borderRadius10, Styles.backgroundBlue, Styles.padding10 ]} >
+						{
+							(!filter)
+							?
+							<Text style={[ Styles.fontColorWhite, Styles.fontSize18, Styles.textAlignCenter ]} >Show Filter</Text>
+							:
+							<Text style={[ Styles.fontColorWhite, Styles.fontSize18, Styles.textAlignCenter ]} >Hide Filter</Text>
+						}
+					</TouchableOpacity>
+				</View>
+
+
 				<ScrollView style={Styles.flex1} keyboardShouldPersistTaps="always" >
 					<View style={[ Styles.flexRow, Styles.flexWrap, Styles.justifySpaceAround ]} >
 						{
-							(movies && movies.length)
+							(filteredMovies && filteredMovies.length)
 							?
-							movies.map(movie => {
+							filteredMovies.map(movie => {
 								return (
 									<TouchableOpacity key={movie.imdbID} onPress={() => { dispatch(getMovieDetail(movie.imdbID)), navigation.navigate('Movie Detail') }} >
 										<MovieCard movie={movie} />
