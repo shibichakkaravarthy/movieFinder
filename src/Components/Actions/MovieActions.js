@@ -31,16 +31,36 @@ export const getMovieDetail = (imdbId) => {
 export const resetSuggestions = () => {
 	return (dispatch) => {
 		dispatch({ type: ACTIONTYPES.UPDATEMOVIEDATA, payload: { field: 'searchSuggestions', value: [] } })
-		dispatch({ type: ACTIONTYPES.UPDATEMOVIEDATA, payload: { field: 'searchTerm', value: '' } })
 	}
 }
 
 export const setSuggestionsToMovies = () => {
 	return (dispatch, getState) => {
 		const suggestions = getState().movies.searchSuggestions
+		if(suggestions.length) {
+			dispatch({ type: ACTIONTYPES.UPDATEMOVIEDATA, payload: { field: 'searchSuggestions', value: [] } })
+			dispatch({ type: ACTIONTYPES.UPDATEMOVIEDATA, payload: { field: 'movies', value: suggestions } })
+		}
 
-		dispatch({ type: ACTIONTYPES.UPDATEMOVIEDATA, payload: { field: 'searchSuggestions', value: [] } })
-		dispatch({ type: ACTIONTYPES.UPDATEMOVIEDATA, payload: { field: 'movies', value: suggestions } })
+		else {
+			const { searchYear, searchTerm } = getState().movies
+
+			let query = `s=${searchTerm}`
+
+			if(searchYear) {
+				query = `s=${searchTerm}&y=${searchYear}`
+			}
+
+			axios.get(API+query)
+			.then(res => {
+				if(res.data.Response) {
+					dispatch({ type: ACTIONTYPES.UPDATEMOVIEDATA, payload: { field: 'movies', value: res.data.Search } })
+				}
+			})
+			.catch(err => {
+				console.log(err)
+			})
+		}
 	}
 }
 
